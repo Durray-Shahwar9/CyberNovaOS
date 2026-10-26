@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Virus | Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<a href="index.html#lib" style="color:var(--cy)">Back to library</a><div id="v"></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+const v=V.find(x=>x.id==new URLSearchParams(location.search).get("v"))||V[0];document.title=v.name+" | Cyber Nova OS";
+const T=[["History","history"],["Before the outbreak","before"],["How it spreads","spread"],["Damage","damage"],["Simulation"],["Charts"],["Protection"]];
+document.getElementById("v").innerHTML=`<h1 style="color:${TC[v.type]||"#3dff9a"}">${v.name}</h1><p class="meta">${v.year} / ${v.type}</p><div class="tabs">${T.map((t,i)=>`<button data-i="${i}">${t[0]}</button>`).join("")}</div><div id="pn"></div>`;
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>show(+b.dataset.i));
+function show(i){clearInterval(window.TM);document.querySelectorAll(".tabs button").forEach((b,j)=>b.classList.toggle("on",i==j));const p=document.getElementById("pn"),k=T[i][1];
+if(k)p.innerHTML=`<p class="pn">${v[k]}</p>`;
+else if(i==4)sim(p);
+else if(i==5)p.innerHTML=`<div class="pn">${["Speed","Reach","Damage","Stealth"].map((n,j)=>`<div class="bar"><span>${n}</span><b class="trk"><i style="width:${v.stats[j]*10}%"></i></b></div>`).join("")}<div class="fact">Infected: ${v.infected}</div><div class="fact">Cost: ${v.cost}</div></div>`;
+else p.innerHTML=`<ul class="pn">${v.protect.map(x=>`<li>${x}</li>`).join("")}</ul>`}
+function sim(p){p.innerHTML=`<div class="pn"><canvas class="s" id="sc" height="300"></canvas><canvas class="s" id="gc" height="70"></canvas><p id="st"></p><label>Patched machines: <b id="pv">0</b>%<input id="pt" type="range" min="0" max="90" value="0"></label><div class="btns"><button id="rel">Release virus</button><button id="rst">Reset</button></div></div>`;
+const c=sc,x=c.getContext("2d"),g=gc.getContext("2d");c.width=gc.width=p.clientWidth-2;let N=[],h=[];
+function paint(){x.clearRect(0,0,c.width,300);N.forEach((a,i)=>N.forEach((b,j)=>{if(i<j&&Math.hypot(a.x-b.x,a.y-b.y)<60){x.strokeStyle=a.s==1&&b.s==1?"#ff4d6d66":"#12384a";x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke()}}));N.forEach(a=>{x.fillStyle=["#22d3ee","#ff4d6d","#3dff9a"][a.s];x.beginPath();x.arc(a.x,a.y,5,0,7);x.fill()});
+g.clearRect(0,0,c.width,70);g.strokeStyle="#ff4d6d";g.beginPath();h.forEach((n,i)=>{const px=i*c.width/150,py=68-n/80*64;i?g.lineTo(px,py):g.moveTo(px,py)});g.stroke()}
+function reset(){clearInterval(window.TM);h=[];N=Array.from({length:80},()=>({x:10+Math.random()*(c.width-20),y:10+Math.random()*280,s:0}));paint();st.textContent="Network ready: 80 machines. Cyan is healthy, red is infected, green is patched."}
+function tick(){const pr=v.stats[0]*.015,inf=N.filter(a=>a.s==1);N.forEach(b=>{if(b.s==0&&inf.some(a=>Math.hypot(a.x-b.x,a.y-b.y)<60&&Math.random()<pr))b.s=1});const n=N.filter(a=>a.s==1).length,ph=N.filter(a=>a.s==2).length;h.push(n);paint();st.textContent=`Infected ${n} of 80. Patched ${ph}.`;if(h.length>=150||n+ph==80)clearInterval(window.TM)}
+pt.oninput=()=>pv.textContent=pt.value;rst.onclick=reset;
+rel.onclick=()=>{reset();N.forEach(a=>{if(Math.random()<pt.value/100)a.s=2});const fr=N.filter(a=>!a.s);if(!fr.length)return;fr[Math.floor(Math.random()*fr.length)].s=1;window.TM=setInterval(tick,150)};reset()}
+show(0);
+</script></body></html>

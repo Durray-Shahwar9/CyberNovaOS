@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><pre id="term"></pre><h1>CYBER NOVA OS</h1><p>A malware lab. Study the worms and viruses that changed computing, then release them in a safe simulation.</p></section>
+<h2 id="lib">Virus library</h2>
+<div class="tools"><input id="s" placeholder="Search a virus, type or year"><select id="f"><option value="">All types</option></select></div><div id="g"></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+const L=["> boot cyber_nova_os","> loading "+V.length+" malware samples","> sandbox: isolated","> ready"];let i=0;(function n(){if(i<L.length){term.textContent+=L[i++]+"\n";setTimeout(n,450)}})();
+[...new Set(V.map(v=>v.type))].forEach(t=>f.insertAdjacentHTML("beforeend",`<option>${t}</option>`));
+function draw(){const q=s.value.toLowerCase();g.innerHTML=V.filter(v=>(!f.value||v.type==f.value)&&(v.name+v.type+v.year).toLowerCase().includes(q)).sort((a,b)=>a.year-b.year).map(v=>`<a class="card" style="--c:${TC[v.type]||"#22d3ee"}" href="virus.html?v=${v.id}"><small>${v.year} / ${v.type}</small><h3>${v.name}</h3><p>${v.infected} infected</p></a>`).join("")||"<p>No match. Try another name or clear the filter.</p>"}
+s.oninput=f.onchange=draw;draw();
+</script></body></html>

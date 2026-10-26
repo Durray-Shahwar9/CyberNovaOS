@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Virus Lab Sandbox | Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<h1>Virus Lab Sandbox</h1><p class="hint">Pick a virus, set up your network, then release it. Change one setting at a time to see what actually slows an outbreak.</p>
+<div class="ctl"><label>Virus<select id="vs"></select></label><label>Network size: <b id="nv">80</b> machines<input id="ns" type="range" min="30" max="150" value="80"></label><label>Patched machines: <b id="pv">0</b>%<input id="ps" type="range" min="0" max="90" value="0"></label><label><input id="fw" type="checkbox">Firewall on (blocks 60% of attempts)</label></div>
+<canvas class="s" id="sc" height="320"></canvas><canvas class="s" id="gc" height="80"></canvas><p id="st"></p>
+<div class="btns"><button id="rel">Release virus</button><button id="rst">Reset</button></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+V.forEach(v=>vs.insertAdjacentHTML("beforeend",`<option value="${v.id}">${v.name} (${v.year})</option>`));
+const c=sc,x=c.getContext("2d"),g=gc.getContext("2d");c.width=gc.width=c.parentElement.clientWidth-28;let N=[],h=[],R=60,TM;
+function paint(){x.clearRect(0,0,c.width,320);N.forEach((a,i)=>N.forEach((b,j)=>{if(i<j&&Math.hypot(a.x-b.x,a.y-b.y)<R){x.strokeStyle=a.s==1&&b.s==1?"#ff4d6d66":"#12384a";x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke()}}));N.forEach(a=>{x.fillStyle=["#22d3ee","#ff4d6d","#3dff9a"][a.s];x.beginPath();x.arc(a.x,a.y,4,0,7);x.fill()});
+g.clearRect(0,0,c.width,80);g.strokeStyle="#ff4d6d";g.beginPath();h.forEach((n,i)=>{const px=i*c.width/200,py=76-n/N.length*72;i?g.lineTo(px,py):g.moveTo(px,py)});g.stroke()}
+function reset(){clearInterval(TM);h=[];const n=+ns.value;R=60*Math.sqrt(80/n);N=Array.from({length:n},()=>({x:10+Math.random()*(c.width-20),y:10+Math.random()*300,s:0}));paint();st.textContent=`Network ready: ${n} machines. Cyan is healthy, red is infected, green is patched.`}
+function tick(){const v=V.find(a=>a.id==vs.value),p=v.stats[0]*.015*(fw.checked?.4:1),inf=N.filter(a=>a.s==1);N.forEach(b=>{if(b.s==0&&inf.some(a=>Math.hypot(a.x-b.x,a.y-b.y)<R&&Math.random()<p))b.s=1});const n=N.filter(a=>a.s==1).length,ph=N.filter(a=>a.s==2).length;h.push(n);paint();st.textContent=`Infected ${n} of ${N.length} (${Math.round(n/N.length*100)}%). Patched ${ph}. Step ${h.length}.`;if(h.length>=200||n+ph==N.length){clearInterval(TM);st.textContent+=` Outbreak over: ${Math.round(n/N.length*100)}% of the network was lost.`}}
+ns.oninput=()=>{nv.textContent=ns.value;reset()};ps.oninput=()=>pv.textContent=ps.value;vs.onchange=rst.onclick=reset;
+rel.onclick=()=>{reset();N.forEach(a=>{if(Math.random()<ps.value/100)a.s=2});const fr=N.filter(a=>!a.s);if(!fr.length)return;fr[Math.floor(Math.random()*fr.length)].s=1;TM=setInterval(tick,150)};reset();
+</script></body></html>

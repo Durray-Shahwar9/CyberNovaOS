@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Defend the Network | Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<h1>Defend the Network</h1><p class="hint">A virus has hit 2 of your 60 machines. Each round you get 3 actions, then the virus spreads. Survive 12 rounds with fewer than 40% of machines infected.</p>
+<label>Attacker<select id="vs"></select></label>
+<div class="btns" id="md"><button data-m="p" class="on">Patch (1)</button><button data-m="i">Isolate (1)</button><button data-m="c">Clean (2)</button></div>
+<p class="hint" id="tip"></p>
+<canvas class="s" id="cv" height="340" style="margin-top:10px"></canvas><p id="st"></p>
+<div class="btns"><button id="end">End round</button><button id="new">New game</button></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+V.forEach(v=>vs.insertAdjacentHTML("beforeend",`<option value="${v.id}">${v.name} (${v.year})</option>`));
+const c=cv,x=c.getContext("2d"),H=340,TIPS={p:"Patch: tap a healthy machine to make it immune.",i:"Isolate: tap any machine to cut its links. It can't infect or be infected.",c:"Clean: tap an infected machine to remove the virus and patch it."};
+c.width=c.parentElement.clientWidth-28;let N,A,R,mode="p",over;
+const near=(a,b)=>!a.o&&!b.o&&Math.hypot(a.x-b.x,a.y-b.y)<60;
+function draw(){x.clearRect(0,0,c.width,H);N.forEach((a,i)=>N.forEach((b,j)=>{if(i<j&&near(a,b)){x.strokeStyle=a.s==1&&b.s==1?"#ff4d6d66":"#12384a";x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke()}}));
+N.forEach(a=>{x.fillStyle=["#22d3ee","#ff4d6d","#3dff9a"][a.s];x.beginPath();x.arc(a.x,a.y,6,0,7);x.fill();if(a.o){x.strokeStyle="#cfe8ef";x.beginPath();x.arc(a.x,a.y,10,0,7);x.stroke()}});
+const i=N.filter(a=>a.s==1).length;st.textContent=over?st.textContent:`Round ${R} of 12. Actions left: ${A}. Infected: ${i} of 60.`}
+function start(){over=false;N=Array.from({length:60},()=>({x:14+Math.random()*(c.width-28),y:14+Math.random()*(H-28),s:0}));[...N].sort(()=>Math.random()-.5).slice(0,2).forEach(n=>n.s=1);A=3;R=1;tip.textContent=TIPS[mode];draw()}
+function finish(){over=true;const i=N.filter(a=>a.s==1).length,w=i<24;st.textContent=(w?"Network saved! ":"Network lost. ")+`${i} infected, ${60-i} survived. Score: ${(60-i)*10}.`;draw()}
+c.onclick=e=>{if(over)return;const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*c.width/r.width,py=(e.clientY-r.top)*H/r.height,n=N.find(a=>Math.hypot(a.x-px,a.y-py)<16);if(!n)return;
+if(mode=="p"&&n.s==0&&A>=1){n.s=2;A-=1}else if(mode=="i"&&!n.o&&A>=1){n.o=true;A-=1}else if(mode=="c"&&n.s==1&&A>=2){n.s=2;A-=2}draw()};
+end.onclick=()=>{if(over)return;const p=V.find(a=>a.id==vs.value).stats[0]*.03,inf=N.filter(a=>a.s==1);N.forEach(b=>{if(b.s==0&&inf.some(a=>near(a,b)&&Math.random()<p))b.s=1});R++;A=3;if(R>12||!N.some(a=>a.s==1))finish();else draw()};
+document.querySelectorAll("#md button").forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll("#md button").forEach(k=>k.classList.toggle("on",k==b));tip.textContent=TIPS[mode]});
+$new=document.getElementById("new");$new.onclick=vs.onchange=start;start();
+</script></body></html>
