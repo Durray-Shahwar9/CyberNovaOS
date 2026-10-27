@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ask Nova | Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<h1>Ask Nova</h1><p class="hint">Ask about any worm, virus or CVE. Nova answers from the Cyber Nova database and checks live sources: Wikipedia, NIST NVD and CISA. It never invents answers, and every reply shows where it came from.</p>
+<div class="chips" id="ch"></div><div id="log"></div>
+<div class="row"><input id="q" placeholder="Ask e.g. How did WannaCry spread?" autocomplete="off"><button id="sd">Ask</button></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+const $=id=>document.getElementById(id);
+function msg(r){const d=document.createElement("div");d.className="m "+r;$("log").append(d);return d}
+function p(d,t){const e=document.createElement("p");e.textContent=t;d.append(e);return e}
+function lk(d,t,u){const a=document.createElement("a");a.href=u;a.textContent=t;a.target="_blank";a.rel="noopener";d.append(a," ")}
+async function J(u){const r=await fetch(u);if(!r.ok)throw 0;return r.json()}
+async function wiki(t){const s=await J("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch="+encodeURIComponent(t));const h=s.query.search[0];if(!h)return null;return J("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(h.title.replace(/ /g,"_")))}
+async function ask(q){q=q.trim();if(!q)return;$("q").value="";msg("u").textContent=q;const b=msg("b");p(b,"Checking sources...");
+const low=q.toLowerCase(),cve=q.match(/CVE-\d{4}-\d{4,}/i),v=V.find(x=>low.includes(x.name.toLowerCase())||low.includes(x.id));
+const out=[];
+if(v){out.push(()=>{p(b,`${v.name} (${v.year}, ${v.type}). ${v.history}`);if(/spread|how/.test(low))p(b,"How it spreads: "+v.spread);if(/damage|impact|cost|harm/.test(low))p(b,"Damage: "+v.damage+" Estimated cost: "+v.cost+".");if(/before|origin|start|discover/.test(low))p(b,"Before the outbreak: "+v.before);if(/protect|prevent|stop|safe|avoid/.test(low))p(b,"Protection: "+v.protect.join("; ")+".");const s=document.createElement("small");s.textContent="Source: Cyber Nova database. ";b.append(s);lk(b,"Open full page","virus.html?v="+v.id)})}
+b.textContent="";out.forEach(f=>f());
+if(cve){const id=cve[0].toUpperCase();let ok=false;
+try{const n=await J("https://services.nvd.nist.gov/rest/json/cves/2.0?cveId="+id),c=n.vulnerabilities[0].cve,d=c.descriptions.find(x=>x.lang=="en"),sc=(c.metrics.cvssMetricV31||c.metrics.cvssMetricV30||[])[0];p(b,id+": "+d.value);if(sc)p(b,"CVSS score: "+sc.cvssData.baseScore+" ("+sc.cvssData.baseSeverity+").");ok=true}catch(e){p(b,"Could not load "+id+" live here. Open the official record instead.")}
+try{const k=await J("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"),h=k.vulnerabilities.find(x=>x.cveID==id);p(b,h?"CISA lists this as actively exploited by attackers: "+h.vulnerabilityName+".":"Not found in the CISA Known Exploited Vulnerabilities catalog.")}catch(e){}
+const s=document.createElement("small");s.textContent="Sources: ";b.append(s);lk(b,"NIST NVD","https://nvd.nist.gov/vuln/detail/"+id);lk(b,"CISA KEV","https://www.cisa.gov/known-exploited-vulnerabilities-catalog");return}
+try{const t=v?v.name+" malware":q.replace(/[?!.]/g,"").replace(/^(what is|what are|who made|how does|how do|tell me about|explain|define)\s+/i,"").replace(/\b(a|an|the)\b/gi,"")+" malware";const r=await wiki(t);
+if(r){const s=document.createElement("small");s.textContent=(v?"Live check, ":"")+"Top Wikipedia match: "+r.title+". ";p(b,r.extract);b.append(s);lk(b,"Read on Wikipedia",r.content_urls.desktop.page)}
+else if(!v)p(b,"I could not find a reliable match. Try the virus name, or check CISA and NIST directly.")}
+catch(e){if(!v)p(b,"I could not reach live sources right now. Check your connection and try again.")}
+if(!v){lk(b,"CISA","https://www.cisa.gov/topics/cybersecurity-best-practices");lk(b,"NIST NVD","https://nvd.nist.gov/")}
+window.scrollTo(0,document.body.scrollHeight)}
+["How did WannaCry spread?","What is ransomware?","Tell me about Stuxnet","CVE-2017-0144","How to protect from phishing?"].forEach(t=>{const e=document.createElement("button");e.textContent=t;e.onclick=()=>ask(t);$("ch").append(e)});
+$("sd").onclick=()=>ask($("q").value);$("q").onkeydown=e=>{if(e.key=="Enter")ask($("q").value)};
+</script></body></html>

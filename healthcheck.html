@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Health Check | Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
+<h1>System Health Check</h1><p class="hint">A website cannot scan your files; browsers block that for your safety. This tool checks what your browser can see, then asks about warning signs and habits to estimate your risk and give a prevention plan. It is an awareness tool, not an antivirus.</p>
+<h2>1. Browser scan</h2><div id="bs"></div>
+<h2>2. Warning signs (tick any you have noticed)</h2><div id="sg"></div>
+<h2>3. Protection habits (tick what you do)</h2><div id="hb"></div>
+<div class="btns"><button id="go">Calculate my risk</button></div><div id="out"></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+const $=id=>document.getElementById(id),ua=navigator.userAgent;
+const SIGNS=[["Files renamed or unopenable, or a ransom note appeared",40,"Ransomware (like WannaCry or CryptoLocker)","Disconnect from the internet now. Do not pay. Restore from an offline backup."],
+["Pop-ups or ads appear even with no browser open",15,"Adware","Remove unknown apps and extensions, then run a full antivirus scan."],
+["Browser homepage or search engine changed by itself",15,"Browser hijacker","Reset your browser settings and remove unknown extensions."],
+["Very slow device, with the fan or battery working hard while idle",15,"Cryptominer or botnet","Check Task Manager or battery usage for unknown apps, then scan."],
+["Camera light or microphone turns on by itself",30,"Spyware or remote access trojan","Disconnect, scan with a trusted tool and change passwords from a clean device."],
+["Programs installed that you do not remember",20,"Trojan or unwanted software","Uninstall unknown programs and scan the device."],
+["Antivirus or Windows Security was switched off",25,"Malware disabling defences","Turn protection back on and run a full scan."],
+["Friends receive strange messages or emails from your accounts",25,"Email worm or account takeover","Change passwords, enable two-factor login and sign out of all devices."],
+["Accounts show logins you do not recognise",25,"Keylogger or infostealer","Change passwords from a clean device and enable two-factor login."]];
+const HAB=[["System and apps update automatically","Turn on automatic updates. WannaCry and Slammer spread through missing patches."],
+["Antivirus or Windows Security is on","Keep built-in protection switched on and updated."],
+["I keep backups offline or in the cloud","Back up important files regularly; backups beat ransomware."],
+["I use two-factor login on key accounts","Enable two-factor login on email and banking."],
+["I only install apps from official stores","Avoid cracked software and unknown downloads."],
+["I never open unexpected attachments or links","Treat unexpected attachments as suspicious; ILOVEYOU and Melissa relied on this."]];
+SIGNS.forEach((s,i)=>$("sg").insertAdjacentHTML("beforeend",`<label><input type="checkbox" id="s${i}">${s[0]}</label>`));
+HAB.forEach((h,i)=>$("hb").insertAdjacentHTML("beforeend",`<label><input type="checkbox" id="h${i}">${h[0]}</label>`));
+const B=[],m=ua.match(/(Edg|Chrome|Firefox)\/(\d+)/),w=ua.match(/Windows NT (\d+)/),a=ua.match(/Android (\d+)/);
+B.push(["Secure connection",location.protocol=="https:"?"ok":"warn",location.protocol=="https:"?"This page uses HTTPS.":"Not HTTPS. Avoid typing passwords here."]);
+if(m){const o=+m[2]<120;B.push(["Browser",o?"warn":"ok",`${m[1]=="Edg"?"Edge":m[1]} ${m[2]}. `+(o?"Very old. Update it now.":"Keep auto-update on.")])}else B.push(["Browser","info","Version not readable. Check for updates in settings."]);
+if(w&&+w[1]<10)B.push(["Operating system","warn","This Windows version no longer gets security fixes. Upgrade it."]);
+if(a&&+a[1]<10)B.push(["Operating system","warn",`Android ${a[1]} is very old and no longer gets security updates.`]);
+B.push(["Privacy signal",navigator.globalPrivacyControl?"ok":"info",navigator.globalPrivacyControl?"Global Privacy Control is on.":"Global Privacy Control is off (optional)."]);
+B.push(["Device","info",`${navigator.hardwareConcurrency||"?"} CPU cores, ${navigator.onLine?"online":"offline"}.`]);
+$("bs").innerHTML=B.map(b=>`<div class="fact"><b class="${b[1]}">${b[1].toUpperCase()}</b> ${b[0]}: ${b[2]}</div>`).join("");
+$("go").onclick=()=>{let sc=0;const th=[],st=new Set();
+SIGNS.forEach((s,i)=>{if($("s"+i).checked){sc+=s[1];th.push(s[2]);st.add(s[3])}});
+HAB.forEach((h,i)=>{if(!$("h"+i).checked){sc+=6;st.add(h[1])}});
+B.filter(b=>b[1]=="warn").forEach(b=>{sc+=8;st.add(b[2])});
+sc=Math.min(100,sc);const vd=sc<25?["LOW","ok"]:sc<55?["MEDIUM","mid"]:["HIGH","warn"];
+$("out").innerHTML=`<h2>Result</h2><div class="fact"><div class="big ${vd[1]}">${sc}/100</div><p>Risk level: <b class="${vd[1]}">${vd[0]}</b></p></div>`+
+(th.length?`<h2>Possible threat types</h2><ul class="pn">${th.map(t=>`<li>${t}</li>`).join("")}</ul>`:"")+
+`<h2>Your prevention plan</h2><ul class="pn">${[...st].map(t=>`<li>${t}</li>`).join("")||"<li>Great habits. Keep everything updated.</li>"}</ul>`+
+(sc>=55?`<div class="fact"><b class="warn">Act now:</b> disconnect from the internet, back up important files, run a full scan with Windows Security or a trusted scanner, and change passwords from a clean device.</div>`:"")+
+`<p class="hint">These results are an estimate. Only a real antivirus scan can confirm an infection.</p>`;$("out").scrollIntoView()};
+</script></body></html>

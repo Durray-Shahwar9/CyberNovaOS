@@ -32,3 +32,12 @@ label{display:block;margin-top:8px}label input{width:100%;padding:0}
 label input[type=checkbox]{width:auto;min-width:0;margin-right:8px}
 .ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px;margin:12px 0}
 .hint{color:var(--mut);margin:6px 0}
+nav{flex-wrap:wrap;overflow-x:visible}
+.ok{color:var(--gr)}.warn{color:var(--rd)}.mid{color:#ffd166}.info{color:var(--mut)}
+.big{font-size:clamp(34px,10vw,60px);line-height:1}
+#log{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.m{padding:10px 12px;border:1px solid var(--line);max-width:92%;overflow-wrap:anywhere}
+.m.u{align-self:flex-end;background:#0e2331;border-color:var(--cy)}.m.b{background:var(--panel)}
+.m p{margin:4px 0}.m a{color:var(--cy)}.m small{color:var(--mut)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{padding:4px 10px;font-size:14px}
+.row{display:flex;gap:8px}
