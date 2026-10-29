@@ -1,10 +1,517 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cyber Nova OS</title><link rel="stylesheet" href="style.css"></head><body><main>
-<section class="hero"><pre id="term"></pre><h1>CYBER NOVA OS</h1><p>A malware lab. Study the worms and viruses that changed computing, then release them in a safe simulation.</p></section>
-<h2 id="lib">Virus library</h2>
-<div class="tools"><input id="s" placeholder="Search a virus, type or year"><select id="f"><option value="">All types</option></select></div><div id="g"></div></main>
-<script src="data.js"></script><script src="app.js"></script><script>
-const L=["> boot cyber_nova_os","> loading "+V.length+" malware samples","> sandbox: isolated","> ready"];let i=0;(function n(){if(i<L.length){term.textContent+=L[i++]+"\n";setTimeout(n,450)}})();
-[...new Set(V.map(v=>v.type))].forEach(t=>f.insertAdjacentHTML("beforeend",`<option>${t}</option>`));
-function draw(){const q=s.value.toLowerCase();g.innerHTML=V.filter(v=>(!f.value||v.type==f.value)&&(v.name+v.type+v.year).toLowerCase().includes(q)).sort((a,b)=>a.year-b.year).map(v=>`<a class="card" style="--c:${TC[v.type]||"#22d3ee"}" href="virus.html?v=${v.id}"><small>${v.year} / ${v.type}</small><h3>${v.name}</h3><p>${v.infected} infected</p></a>`).join("")||"<p>No match. Try another name or clear the filter.</p>"}
-s.oninput=f.onchange=draw;draw();
-</script></body></html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber Nova OS | Command Center</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* Cyber Nova OS — homepage-only command center */
+.cn-home {
+  --bg: #050b10;
+  --panel: #0a151e;
+  --line: #19303c;
+  --cyan: #22d3ee;
+  --green: #42f5a1;
+  --purple: #b879ff;
+  --muted: #8095a5;
+  color: #d8e9f2;
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 18px;
+  font-family: "Courier New", monospace;
+}
+.cn-home * { box-sizing: border-box; }
+.cn-home h1, .cn-home h2, .cn-home h3, .cn-home p { margin-top: 0; }
+.cn-home a { color: inherit; text-decoration: none; }
+.cn-home .muted { color: var(--muted); }
+.cn-home .eyebrow {
+  color: var(--cyan);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.cn-home .topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 25px;
+  padding-bottom: 15px; border-bottom: 1px solid var(--line);
+}
+.cn-home .brand {
+  color: var(--green); font-size: 16px; font-weight: bold;
+  letter-spacing: 2px; text-shadow: 0 0 14px #42f5a166;
+}
+.cn-home .status { color: var(--green); font-size: 11px; }
+.cn-home .status::before {
+  content: ""; display: inline-block; width: 7px; height: 7px;
+  background: var(--green); border-radius: 50%; margin-right: 7px;
+  box-shadow: 0 0 9px var(--green);
+}
+.cn-home .nav {
+  display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 26px;
+}
+.cn-home .nav a, .cn-home .action {
+  border: 1px solid #245061; padding: 9px 11px;
+  font-size: 11px; color: var(--cyan); background: #0b1821;
+  transition: .2s;
+}
+.cn-home .nav a:hover, .cn-home .action:hover {
+  border-color: var(--green); color: var(--green);
+  box-shadow: 0 0 13px #42f5a122;
+}
+.cn-home .hero-title {
+  display: flex; justify-content: space-between; align-items: end;
+  gap: 18px; flex-wrap: wrap; margin-bottom: 22px;
+}
+.cn-home .hero-title h1 {
+  font-size: clamp(27px, 5vw, 43px); letter-spacing: 2px;
+  color: var(--green); text-shadow: 0 0 20px #42f5a144;
+  margin: 8px 0;
+}
+.cn-home .hero-title p {
+  max-width: 600px; color: var(--muted); line-height: 1.7;
+  font-size: 12px; margin-bottom: 0;
+}
+.cn-home .panel {
+  background: linear-gradient(145deg, #0b1923, #071018);
+  border: 1px solid var(--line); border-radius: 5px;
+  min-width: 0; overflow: hidden;
+}
+.cn-home .panel-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line);
+  font-size: 11px; letter-spacing: 1px;
+}
+.cn-home .panel-body { padding: 14px; }
+.cn-home .tag {
+  font-size: 9px; padding: 4px 6px; color: var(--green);
+  border: 1px solid #245640; white-space: nowrap;
+}
+.cn-home .overview {
+  display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, .9fr);
+  gap: 14px; margin-bottom: 14px;
+}
+.cn-home .map-wrap {
+  background:
+    linear-gradient(#15303a55 1px, transparent 1px),
+    linear-gradient(90deg, #15303a55 1px, transparent 1px);
+  background-size: 30px 30px;
+  min-height: 255px; padding: 10px;
+}
+.cn-home .map-wrap svg { width: 100%; height: 245px; display: block; }
+.cn-home .map-caption {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  color: var(--muted); font-size: 10px; padding: 0 14px 14px;
+}
+.cn-home .dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  margin-right: 5px;
+}
+.cn-home .terminal {
+  font-size: 10px; line-height: 1.9; overflow-wrap: anywhere;
+}
+.cn-home .terminal div { color: #88b5a8; }
+.cn-home .terminal div:nth-child(3n) { color: var(--cyan); }
+.cn-home .terminal .good { color: var(--green); }
+.cn-home .terminal .purple { color: var(--purple); }
+.cn-home .metrics {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; margin-bottom: 14px;
+}
+.cn-home .metric { padding: 15px; }
+.cn-home .metric .label {
+  font-size: 10px; color: var(--muted); line-height: 1.6;
+}
+.cn-home .metric .number {
+  font-size: clamp(21px, 3vw, 29px); margin: 10px 0;
+  color: var(--cyan); font-weight: bold;
+}
+.cn-home .metric:nth-child(2) .number { color: var(--green); }
+.cn-home .metric:nth-child(3) .number { color: var(--purple); }
+.cn-home .metric:nth-child(4) .number { color: #ffbd69; }
+.cn-home .mini-bars {
+  display: flex; align-items: end; height: 45px; gap: 5px;
+  border-bottom: 1px solid #25404c; padding-top: 4px;
+}
+.cn-home .mini-bars span {
+  flex: 1; min-width: 3px; background: var(--cyan);
+  opacity: .75; border-radius: 2px 2px 0 0;
+}
+.cn-home .lower-grid {
+  display: grid; grid-template-columns: 1.15fr .85fr;
+  gap: 14px; margin-bottom: 28px;
+}
+.cn-home .chart { width: 100%; display: block; }
+.cn-home .feature-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px;
+}
+.cn-home .feature {
+  display: block; padding: 13px; border: 1px solid var(--line);
+  background: #09141c; transition: .2s;
+}
+.cn-home .feature:hover { border-color: var(--cyan); transform: translateY(-2px); }
+.cn-home .feature .symbol { color: var(--cyan); font-size: 19px; margin-bottom: 10px; }
+.cn-home .feature h3 { font-size: 12px; margin-bottom: 7px; }
+.cn-home .feature p { font-size: 10px; color: var(--muted); line-height: 1.6; margin-bottom: 0; }
+.cn-home .section-title {
+  font-size: 19px; color: var(--cyan); margin: 25px 0 7px;
+}
+.cn-home .section-desc { font-size: 11px; color: var(--muted); line-height: 1.6; }
+.cn-home .tools {
+  display: flex; gap: 10px; margin: 15px 0;
+}
+.cn-home input, .cn-home select {
+  width: 100%; min-width: 0; background: #09151e;
+  border: 1px solid #1b3948; color: #d8e9f2;
+  padding: 12px; font: inherit; font-size: 12px; border-radius: 2px;
+}
+.cn-home input:focus, .cn-home select:focus {
+  outline: 1px solid var(--cyan); border-color: var(--cyan);
+}
+.cn-home #g {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.cn-home .card {
+  display: block; background: #0a1720;
+  border: 1px solid #19303c; border-left: 3px solid var(--c, #22d3ee);
+  padding: 13px; min-width: 0; transition: .2s;
+}
+.cn-home .card:hover {
+  background: #10232e; transform: translateY(-2px);
+  box-shadow: 0 5px 20px #0005;
+}
+.cn-home .card small { font-size: 9px; color: var(--muted); }
+.cn-home .card h3 { color: var(--c, var(--cyan)); font-size: 14px; margin: 10px 0; overflow-wrap: anywhere; }
+.cn-home .card p { color: #a6b8c4; font-size: 11px; line-height: 1.6; margin-bottom: 0; }
+.cn-home .footer {
+  border-top: 1px solid var(--line); margin-top: 30px; padding-top: 15px;
+  font-size: 10px; color: var(--muted); line-height: 1.8;
+}
+@media (max-width: 760px) {
+  .cn-home { padding: 13px; }
+  .cn-home .overview { grid-template-columns: 1fr; }
+  .cn-home .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cn-home .lower-grid { grid-template-columns: 1fr; }
+  .cn-home #g { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cn-home .map-wrap, .cn-home .map-wrap svg { min-height: 190px; height: 200px; }
+}
+@media (max-width: 380px) {
+  .cn-home .tools { flex-direction: column; }
+  .cn-home .feature-list { grid-template-columns: 1fr; }
+  .cn-home .nav a { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-home *, .cn-home *::before, .cn-home *::after {
+    animation: none !important; transition: none !important;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="cn-home">
+
+  <header class="topbar">
+    <div class="brand">◆ CYBER NOVA OS</div>
+    <div class="status">LOCAL DASHBOARD ONLINE</div>
+  </header>
+
+  <nav class="nav" aria-label="Main navigation">
+    <a href="index.html">⌂ Home</a>
+    <a href="#lib">▤ Library</a>
+    <a href="sandbox.html">◈ Sandbox</a>
+    <a href="defend.html">⬡ Defend</a>
+    <a href="health.html">✚ Health Check</a>
+    <a href="threat.html">⌘ Threat Helper</a>
+  </nav>
+
+  <section class="hero-title">
+    <div>
+      <div class="eyebrow">Cybersecurity learning environment / v1.0</div>
+      <h1>COMMAND CENTER<span style="color:#22d3ee">_</span></h1>
+      <p>
+        Explore historical malware, simulate network outbreaks, and learn
+        defensive security through interactive educational tools.
+      </p>
+    </div>
+    <div class="tag">● SIMULATION ENVIRONMENT</div>
+  </section>
+
+  <section class="overview">
+    <article class="panel">
+      <div class="panel-head">
+        <span>GLOBAL NETWORK OVERVIEW</span>
+        <span class="tag">ILLUSTRATIVE</span>
+      </div>
+      <div class="map-wrap">
+        <svg viewBox="0 0 600 300" role="img"
+             aria-label="Illustrative world network map with connected nodes">
+          <defs>
+            <pattern id="grid" width="25" height="25" patternUnits="userSpaceOnUse">
+              <path d="M25 0H0V25" fill="none" stroke="#17313d" stroke-width=".6"/>
+            </pattern>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="600" height="300" fill="url(#grid)"/>
+          <g fill="#102e3a" stroke="#226071" stroke-width="1.1" opacity=".95">
+            <path d="M35 76L59 47 91 35 119 46 140 37 167 54 182 73 160 90 145 111 124 122 111 148 89 135 79 111 53 104Z"/>
+            <path d="M144 151L169 160 184 186 177 211 190 230 178 258 161 241 151 214 135 192Z"/>
+            <path d="M260 62L281 43 309 46 322 58 348 51 367 67 394 65 411 84 393 103 365 106 347 128 327 123 312 99 288 93 273 78Z"/>
+            <path d="M291 114L316 123 331 155 319 188 300 221 285 196 277 163 266 142Z"/>
+            <path d="M366 132L391 120 423 126 442 145 469 143 490 162 476 181 446 175 428 194 409 180 391 157 370 155Z"/>
+            <path d="M453 211L480 205 507 220 501 240 474 246 454 232Z"/>
+            <path d="M501 83L519 68 541 78 554 100 539 122 522 111Z"/>
+          </g>
+          <g stroke="#39e9d0" stroke-width="1.1" opacity=".7">
+            <path d="M91 91Q190 6 306 82" fill="none"/>
+            <path d="M306 82Q394 25 471 150" fill="none"/>
+            <path d="M306 82Q310 155 300 177" fill="none"/>
+            <path d="M306 82Q427 106 481 225" fill="none"/>
+            <path d="M91 91Q174 163 165 222" fill="none"/>
+            <path d="M165 222Q235 160 306 82" fill="none"/>
+            <path d="M471 150Q495 115 533 96" fill="none"/>
+            <path d="M300 177Q390 195 481 225" fill="none"/>
+          </g>
+          <g filter="url(#glow)">
+            <g fill="#42f5a1">
+              <circle cx="91" cy="91" r="4"/><circle cx="306" cy="82" r="5"/>
+              <circle cx="471" cy="150" r="4"/><circle cx="165" cy="222" r="4"/>
+              <circle cx="481" cy="225" r="4"/>
+            </g>
+            <g fill="#22d3ee">
+              <circle cx="210" cy="111" r="3"/><circle cx="300" cy="177" r="3"/>
+              <circle cx="391" cy="112" r="3"/><circle cx="533" cy="96" r="3"/>
+              <circle cx="350" cy="217" r="3"/><circle cx="121" cy="119" r="3"/>
+            </g>
+            <g fill="#bd7aff">
+              <circle cx="190" cy="70" r="3"/><circle cx="416" cy="172" r="3"/>
+              <circle cx="451" cy="89" r="3"/><circle cx="264" cy="136" r="3"/>
+            </g>
+          </g>
+          <g fill="#82a7b7" font-size="9" font-family="monospace">
+            <text x="20" y="285">NETWORK MAP / CONCEPTUAL</text>
+            <text x="475" y="285">NODES: DEMO</text>
+          </g>
+        </svg>
+      </div>
+      <div class="map-caption">
+        <span><i class="dot" style="background:#42f5a1"></i>Network nodes</span>
+        <span><i class="dot" style="background:#22d3ee"></i>Connections</span>
+        <span><i class="dot" style="background:#bd7aff"></i>Example endpoints</span>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <span>SYSTEM TERMINAL</span>
+        <span class="tag">DEMO LOG</span>
+      </div>
+      <div class="panel-body terminal" id="cn-terminal" aria-live="polite">
+        <div>&gt; initializing dashboard...</div>
+        <div>&gt; loading malware database...</div>
+        <div>&gt; preparing simulation modules...</div>
+        <div class="good">&gt; educational environment ready</div>
+        <div>&gt; external threat feed: not connected</div>
+        <div class="purple">&gt; awaiting user input_</div>
+      </div>
+    </article>
+  </section>
+
+  <section class="metrics" aria-label="Project overview statistics">
+    <article class="panel metric">
+      <div class="label">MALWARE RECORDS</div>
+      <div class="number" id="cn-total">--</div>
+      <div class="muted" style="font-size:10px">Loaded from local database</div>
+      <div class="mini-bars" aria-hidden="true">
+        <span style="height:25%"></span><span style="height:42%"></span>
+        <span style="height:35%"></span><span style="height:65%"></span>
+        <span style="height:48%"></span><span style="height:85%"></span>
+        <span style="height:70%"></span><span style="height:100%"></span>
+      </div>
+    </article>
+    <article class="panel metric">
+      <div class="label">SECURITY MODULES</div>
+      <div class="number">05</div>
+      <div class="muted" style="font-size:10px">Website navigation sections</div>
+      <div class="mini-bars" aria-hidden="true">
+        <span style="height:35%"></span><span style="height:65%"></span>
+        <span style="height:45%"></span><span style="height:80%"></span>
+        <span style="height:60%"></span><span style="height:95%"></span>
+      </div>
+    </article>
+    <article class="panel metric">
+      <div class="label">THREAT FEED</div>
+      <div class="number" style="font-size:20px">OFFLINE</div>
+      <div class="muted" style="font-size:10px">No live feed configured</div>
+      <div class="mini-bars" aria-hidden="true">
+        <span style="height:25%;background:#bd7aff"></span>
+        <span style="height:35%;background:#bd7aff"></span>
+        <span style="height:30%;background:#bd7aff"></span>
+        <span style="height:45%;background:#bd7aff"></span>
+        <span style="height:40%;background:#bd7aff"></span>
+      </div>
+    </article>
+    <article class="panel metric">
+      <div class="label">ENVIRONMENT</div>
+      <div class="number" style="font-size:20px">SIMULATED</div>
+      <div class="muted" style="font-size:10px">Educational demonstrations</div>
+      <div class="mini-bars" aria-hidden="true">
+        <span style="height:40%;background:#ffbd69"></span>
+        <span style="height:55%;background:#ffbd69"></span>
+        <span style="height:35%;background:#ffbd69"></span>
+        <span style="height:75%;background:#ffbd69"></span>
+        <span style="height:60%;background:#ffbd69"></span>
+      </div>
+    </article>
+  </section>
+
+  <section class="lower-grid">
+    <article class="panel">
+      <div class="panel-head">
+        <span>NETWORK ACTIVITY VISUALIZATION</span>
+        <span class="tag">ILLUSTRATIVE DATA</span>
+      </div>
+      <div class="panel-body">
+        <svg class="chart" viewBox="0 0 500 170" role="img"
+             aria-label="Illustrative network activity line chart">
+          <g stroke="#1b3440" stroke-width="1">
+            <path d="M30 20H480M30 55H480M30 90H480M30 125H480M30 150H480"/>
+            <path d="M30 20V150M120 20V150M210 20V150M300 20V150M390 20V150M480 20V150"/>
+          </g>
+          <path d="M30 125L70 106 110 115 150 77 190 92 230 55 270 75 310 43 350 60 390 33 430 49 480 25"
+                fill="none" stroke="#22d3ee" stroke-width="2"/>
+          <path d="M30 140L70 129 110 135 150 112 190 120 230 96 270 105 310 85 350 95 390 73 430 86 480 64"
+                fill="none" stroke="#bd7aff" stroke-width="2"/>
+          <g fill="#8095a5" font-size="9" font-family="monospace">
+            <text x="30" y="164">T1</text><text x="120" y="164">T2</text>
+            <text x="210" y="164">T3</text><text x="300" y="164">T4</text>
+            <text x="390" y="164">T5</text><text x="460" y="164">T6</text>
+          </g>
+        </svg>
+        <div class="map-caption" style="padding:12px 0 0">
+          <span><i class="dot" style="background:#22d3ee"></i>Example traffic</span>
+          <span><i class="dot" style="background:#bd7aff"></i>Example activity</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <span>QUICK ACCESS</span>
+        <span class="tag">MODULES</span>
+      </div>
+      <div class="panel-body feature-list">
+        <a class="feature" href="#lib">
+          <div class="symbol">⌕</div>
+          <h3>Virus Library</h3>
+          <p>Explore historical malware records.</p>
+        </a>
+        <a class="feature" href="sandbox.html">
+          <div class="symbol">◈</div>
+          <h3>Virus Sandbox</h3>
+          <p>Explore simulated malware spread.</p>
+        </a>
+        <a class="feature" href="defend.html">
+          <div class="symbol">⬡</div>
+          <h3>Network Defense</h3>
+          <p>Practice defensive actions.</p>
+        </a>
+        <a class="feature" href="threat.html">
+          <div class="symbol">⌘</div>
+          <h3>Threat Helper</h3>
+          <p>Explore guided security advice.</p>
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <section id="lib">
+    <div class="eyebrow">Malware knowledge base</div>
+    <h2 class="section-title">VIRUS LIBRARY</h2>
+    <p class="section-desc">
+      Search historical malware by name, type, or year. Select a record to
+      open its existing detail page.
+    </p>
+    <div class="tools">
+      <input id="s" placeholder="Search a virus, type or year"
+             aria-label="Search malware">
+      <select id="f" aria-label="Filter malware by type">
+        <option value="">All types</option>
+      </select>
+    </div>
+    <div id="g" aria-live="polite"></div>
+  </section>
+
+  <footer class="footer">
+    CYBER NOVA OS / EDUCATIONAL CYBERSECURITY PROJECT<br>
+    Simulations and illustrative dashboard graphics are not live threat
+    intelligence or real-world security monitoring.
+  </footer>
+
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  const root = document.querySelector(".cn-home");
+  const search = root.querySelector("#s");
+  const filter = root.querySelector("#f");
+  const grid = root.querySelector("#g");
+  const total = root.querySelector("#cn-total");
+  const terminal = root.querySelector("#cn-terminal");
+
+  if (typeof V === "undefined" || !Array.isArray(V)) {
+    grid.textContent = "The malware database could not be loaded. Check data.js.";
+    total.textContent = "ERR";
+    return;
+  }
+
+  total.textContent = V.length;
+
+  const types = [...new Set(V.map(v => v.type).filter(Boolean))].sort();
+  types.forEach(type => {
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = type;
+    filter.appendChild(option);
+  });
+
+  function draw() {
+    const query = search.value.trim().toLowerCase();
+    const selectedType = filter.value;
+
+    const matches = V.filter(v => {
+      const searchable = [v.name, v.type, v.year].join(" ").toLowerCase();
+      return (!selectedType || v.type === selectedType) &&
+             searchable.includes(query);
+    }).sort((a, b) => a.year - b.year);
+
+    grid.replaceChildren();
+
+    if (!matches.length) {
+      const message = document.createElement("p");
+      message.className = "section-desc";
+      message.textContent = "No match found. Try another search or clear the filter.";
+      grid.appendChild(message);
+      return;
+    }
+
+    matches.forEach(v => {
+      const card = document.createElement("a");
+      card.className = "card";
+      card.href = "virus.html?v=" + encodeURIComponent(v.id);
+      card.style.setProperty("--c", (typeof TC !== "undefined" && TC[v.type]) || "#22d3ee");
+
+      const meta = document.createElement("small");
+      meta.textContent = v.year + " / " + v.type;
+
+      const name = document.createElement("h3
