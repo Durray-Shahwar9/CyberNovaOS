@@ -459,59 +459,88 @@
 <script src="app.js"></script>
 
 <script>
-(function () {
-  "use strict";
+const term = document.getElementById("term");
+const search = document.getElementById("s");
+const filter = document.getElementById("f");
+const grid = document.getElementById("g");
 
-  const root = document.querySelector(".cn-home");
-  const search = root.querySelector("#s");
-  const filter = root.querySelector("#f");
-  const grid = root.querySelector("#g");
-  const total = root.querySelector("#cn-total");
-  const terminal = root.querySelector("#cn-terminal");
+const lines = [
+  "> boot cyber_nova_os",
+  "> loading malware database...",
+  "> sandbox: isolated",
+  "> ready"
+];
 
-  if (typeof V === "undefined" || !Array.isArray(V)) {
-    grid.textContent = "The malware database could not be loaded. Check data.js.";
-    total.textContent = "ERR";
-    return;
+let lineIndex = 0;
+
+(function typeTerminal() {
+  if (lineIndex < lines.length) {
+    term.textContent += lines[lineIndex++] + "\n";
+    setTimeout(typeTerminal, 450);
   }
+})();
 
-  total.textContent = V.length;
-
-  const types = [...new Set(V.map(v => v.type).filter(Boolean))].sort();
-  types.forEach(type => {
+if (typeof V !== "undefined" && Array.isArray(V)) {
+  [...new Set(V.map(v => v.type))].sort().forEach(type => {
     const option = document.createElement("option");
     option.value = type;
     option.textContent = type;
     filter.appendChild(option);
   });
+}
 
-  function draw() {
-    const query = search.value.trim().toLowerCase();
-    const selectedType = filter.value;
+function normalize(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
 
-    const matches = V.filter(v => {
-      const searchable = [v.name, v.type, v.year].join(" ").toLowerCase();
-      return (!selectedType || v.type === selectedType) &&
-             searchable.includes(query);
-    }).sort((a, b) => a.year - b.year);
+function draw() {
+  if (typeof V === "undefined" || !Array.isArray(V)) {
+    grid.textContent = "Error: malware database failed to load. Check data.js.";
+    return;
+  }
 
-    grid.replaceChildren();
+  const query = normalize(search.value);
+  const selectedType = filter.value;
 
-    if (!matches.length) {
-      const message = document.createElement("p");
-      message.className = "section-desc";
-      message.textContent = "No match found. Try another search or clear the filter.";
-      grid.appendChild(message);
-      return;
-    }
+  const matches = V.filter(v => {
+    const text = normalize(
+      [v.name, v.type, v.year, v.infected, v.id].join(" ")
+    );
 
-    matches.forEach(v => {
-      const card = document.createElement("a");
-      card.className = "card";
-      card.href = "virus.html?v=" + encodeURIComponent(v.id);
-      card.style.setProperty("--c", (typeof TC !== "undefined" && TC[v.type]) || "#22d3ee");
+    return (!selectedType || v.type === selectedType) &&
+           text.includes(query);
+  }).sort((a, b) => a.year - b.year);
 
-      const meta = document.createElement("small");
-      meta.textContent = v.year + " / " + v.type;
+  grid.replaceChildren();
 
-      const name = document.createElement("h3
+  if (matches.length === 0) {
+    grid.textContent = "No matching records found. Clear the search or select All types.";
+    return;
+  }
+
+  matches.forEach(v => {
+    const card = document.createElement("a");
+    card.className = "card";
+    card.href = "virus.html?v=" + encodeURIComponent(v.id);
+    card.style.setProperty("--c", TC[v.type] || "#22d3ee");
+
+    const meta = document.createElement("small");
+    meta.textContent = `${v.year} / ${v.type}`;
+
+    const heading = document.createElement("h3");
+    heading.textContent = v.name;
+
+    const impact = document.createElement("p");
+    impact.textContent = `${v.infected} infected`;
+
+    card.append(meta, heading, impact);
+    grid.appendChild(card);
+  });
+}
+
+search.addEventListener("input", draw);
+filter.addEventListener("change", draw);
+draw();
+</script>
