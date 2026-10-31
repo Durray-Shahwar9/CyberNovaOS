@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Threat Nova | Cyber Nova OS</title><link rel="stylesheet" href="style.css">
+<style>.row{display:flex;gap:8px}.os{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips{max-height:220px;overflow-y:auto}#out a{color:var(--cy)}</style></head><body><main>
+<h1>Threat Nova</h1><p class="hint" id="sub"></p>
+<h2>1. Your device</h2><div class="os" id="os"></div>
+<h2>2. Ask or describe the problem</h2><div class="row"><input id="tx" placeholder="e.g. my phone is hot and slow, or what is a worm?" autocomplete="off"><button id="go">Ask</button></div>
+<h2>3. Or tap a symptom</h2><div class="chips" id="ch"></div><div id="out"></div></main>
+<script src="data.js"></script><script src="app.js"></script><script>
+const $=id=>document.getElementById(id);
+//DATA
+const S=[
+["Files locked or ransom note","ransom|locked|encrypt|bitcoin|can't open my files","Ransomware","It locks files and demands payment.","Disconnect from the internet now;Do not pay, restore from an offline backup"],
+["Pop-ups and ads keep appearing","pop-up|popup|pop ups|ads appear|adverts","Adware","Unwanted software pushing ads.","Remove unknown apps and extensions;Reset browser settings"],
+["Homepage or search engine changed","homepage|home page|search engine|redirect","Browser hijacker","It changes browser settings to push sites.","Remove unknown extensions;Reset browser settings"],
+["Device very slow","slow|lag|sluggish|freez","Slowdown","Could be malware, or full storage and too many startup apps.","Check what uses the most CPU;Free up storage and restart"],
+["Overheating or loud fan","overheat|too hot|is hot|getting hot|heating|fan noise|fan loud|phone hot","Cryptominer","Miners keep the processor busy.","Look for unknown apps using CPU;Remove them and scan"],
+["Battery drains fast","battery drain|battery dies|battery running out","Background malware or heavy apps","Hidden activity uses power.","Check battery use per app;Uninstall unknown apps"],
+["Camera light turns on by itself","camera light|camera turns on|webcam","Spyware","Spyware can record through the camera.","Check which apps can use the camera;Update the system and scan"],
+["Microphone seems active","microphone|mic indicator|listening to me","Spyware","Spyware can record audio.","Review microphone permissions;Remove unknown apps"],
+["Antivirus turned itself off","antivirus off|antivirus disabled|defender off|can't turn on antivirus|turned itself off|antivirus turned","Malware disabling defences","Some malware switches security tools off.","Restart in Safe Mode and scan;Turn protection back on"],
+["Friends got strange messages from me","friends got|contacts received|strange messages|messages i didn't send","Hijacked account or worm","Worms and hijackers message your contacts.","Warn your contacts;Change password and sign out of all devices"],
+["Login alert from unknown device","unknown login|new login|unrecognised login|login alert","Stolen password","Someone else may have your password.","Change the password from a clean device;Turn on two-factor login"],
+["Password stopped working","password not working|can't log in|password changed|password stopped","Account takeover","The attacker may have changed it.","Use the account recovery option;Turn on two-factor login"],
+["Apps I did not install","did not install|didn't install|unknown app|new app appeared","Trojan or unwanted software","Trojans arrive disguised as useful apps.","Uninstall the newest unknown apps;Install only from official stores"],
+["Mobile data running out fast","data usage|mobile data|data finished|data running out","Background malware","Hidden apps may send data.","Check data use per app;Remove suspicious apps"],
+["Wi-Fi or internet very slow","wifi slow|wi-fi slow|internet slow|internet very slow|wifi very slow","Botnet or router problem","Infected devices can use your connection.","Change the router admin password;Update router firmware"],
+["Redirected to fake websites","fake website|redirected|dns","DNS hijack","A changed DNS setting sends you to fake sites.","Check DNS settings on the router and device;Reset the router and change its password"],
+["Blue screen or keeps crashing","blue screen|bsod|crash|keeps restarting|reboot","Crashes","Malware, or a driver or hardware fault.","Install system updates;Run a full scan"],
+["Files missing or renamed","files missing|files renamed|files deleted|disappeared","Wiper or ransomware","Some malware destroys or renames files.","Stop using the device and check backups;Scan after a clean restart"],
+["Unknown browser extension","extension|toolbar|add-on","Malicious extension","Extensions can read and change what you browse.","Remove unknown extensions;Reset the browser"],
+["Notification spam from websites","notification spam|spam notifications|browser notifications","Notification abuse","You allowed a site to send notifications.","Block the site in browser notification settings;Clear site data"],
+["Fake virus warning on screen","fake virus|virus warning|your device is infected|call this number|scareware","Scareware scam","Scam pop-ups scare you into paying or calling.","Close the tab and never call the number;Never give remote access or pay"],
+["I clicked a suspicious link","clicked a link|clicked link|clicked on a link|suspicious link","Phishing","Links can steal passwords or install malware.","Change passwords from a clean device;Run a scan and watch your accounts"],
+["I opened a suspicious attachment","opened attachment|opened an attachment|enable macros|suspicious attachment","Malware dropper","Attachments can install malware.","Disconnect and run a full scan;Change passwords from a clean device"],
+["USB drive shows shortcut files","usb|pen drive|flash drive|shortcut files","USB worm","Some worms hide folders and make shortcuts.","Do not open files on it;Scan the drive before using it again"],
+["Antivirus found a threat","antivirus found|threat detected|quarantine","Detected malware","The scanner found something suspicious.","Follow the removal prompt;Run a full scan afterwards"],
+["Money stolen or unknown payment","money stolen|unauthorised payment|unauthorized transaction|bank","Banking trojan or phishing","Criminals steal logins to move money.","Call your bank immediately;Change banking passwords from a clean device"],
+["Social media account hacked","instagram hacked|facebook hacked|snapchat hacked|whatsapp hacked|account hacked","Account takeover","Stolen or reused passwords are the usual cause.","Use the platform's account recovery;Turn on two-factor login"],
+["Strange texts or surprise charges","premium sms|strange sms|unknown charges|sms charges|strange texts|surprise charges","Premium SMS malware or scam","Some apps send paid texts.","Check your carrier bill;Remove unknown apps"],
+["Ads on lock screen or home screen","lock screen ads|home screen ads|ads on lock screen|ads on home screen","Adware","Adware can show ads outside the browser.","Uninstall newly installed apps;Restart in Safe mode to find the cause"],
+["App will not uninstall","won't uninstall|will not uninstall|cannot uninstall|device admin","Persistent malware","It may hold device admin rights.","Remove its admin rights in settings;Uninstall in Safe mode"],
+["Mouse moves or programs open by themselves","mouse moves|cursor moves|opens by itself|remote access","Remote access trojan","Someone may control the device remotely.","Disconnect from the internet;Check for unknown remote tools and scan"],
+["Task Manager or tools are blocked","task manager|disabled by administrator|registry disabled","Malware blocking tools","Malware may block the tools used to remove it.","Scan in Safe Mode;Run Microsoft Defender Offline scan"],
+["Unknown startup programs","startup|login items|starts by itself","Persistence","Malware adds itself to startup to survive reboots.","Review startup apps;Disable anything unknown"],
+["Spam sent from my email","spam from my email|spam sent|outbox|emails sent","Email worm or hijacked email","Attackers use hijacked mailboxes.","Change the email password;Check forwarding rules and sign out of all devices"],
+["Asked for admin password unexpectedly","admin password|fake password prompt|asks for password","Fake prompt or trojan","Fake prompts steal admin passwords.","Cancel it and type nothing;Check Applications for unknown apps"],
+["Unknown profile or VPN on iPhone","profile|vpn profile|device management","Malicious profile","A bad profile can redirect or watch traffic.","Delete unknown profiles in Settings, General, VPN & Device Management;Update iOS"]];
+const Q=[
+["What is malware?","malware","Malware is any software built to harm, spy on or take control of a device. Viruses, worms, trojans, ransomware and spyware are all types."],
+["What is a computer virus?","a virus|computer virus|what is virus","A virus attaches itself to a normal file and spreads when that file is opened or shared. It needs a person to run it."],
+["What is a worm?","what is a worm|a worm|computer worm","A worm copies itself across networks with no click needed, which is why Slammer and WannaCry spread so fast."],
+["Virus vs worm","virus vs worm|virus and worm|difference between virus","A virus needs a host file and a user action. A worm spreads on its own across networks."],
+["What is a trojan?","trojan","A trojan pretends to be useful software but secretly does harm. It does not copy itself."],
+["What is ransomware?","what is ransomware|ransomware","Ransomware locks or encrypts your files and demands payment. WannaCry and Locky are examples."],
+["What is spyware?","spyware","Spyware secretly collects your messages, passwords or location and sends them to someone else."],
+["What is adware?","adware","Adware shows unwanted ads and sometimes tracks browsing. It often comes bundled with free software."],
+["What is a botnet?","botnet","A botnet is a network of infected devices controlled remotely, used for spam or flooding sites. Mirai built one from cameras and routers."],
+["What is phishing?","what is phishing|phishing","A scam message pretending to be a trusted sender to trick you into giving passwords or clicking bad links."],
+["What is antivirus?","what is antivirus|antivirus software","Antivirus scans for known malware and suspicious behaviour and removes it. It helps, but cannot catch everything."],
+["What is a firewall?","firewall","A firewall filters network traffic using rules and blocks connections that should not get through."],
+["What is a zero-day?","zero-day|zero day","A security flaw the maker does not know about yet, so no patch exists. Stuxnet used four."],
+["What is a rootkit?","rootkit","A rootkit hides deep in a system so other malware and the attacker stay invisible to normal tools."],
+["What is a keylogger?","keylogger","A keylogger records what you type, including passwords. Two-factor login limits the damage."],
+["What is a DDoS attack?","ddos|denial of service","A DDoS attack floods a site with traffic from many devices so real users cannot get in."],
+["What is a backdoor?","backdoor","A hidden way into a system that skips normal login checks."],
+["Why install updates?","patch|why update|security update","Updates fix security flaws. WannaCry and Slammer mostly hit computers missing patches that already existed."],
+["What is a wiper?","wiper","Malware built to destroy data rather than steal it or ask for ransom. NotPetya was a wiper disguised as ransomware."],
+["What is a supply-chain attack?","supply chain|supply-chain","Attackers break into a trusted supplier or software update to reach all its customers, as with SolarWinds."],
+["What is a CVE?","what is a cve|cve number","A public ID for a known security flaw, like CVE-2017-0144. Look them up at nvd.nist.gov."],
+["What is a macro?","macro","A small program inside an Office file. Melissa spread this way. Keep macros disabled for files you don't trust."],
+["What is EternalBlue?","eternalblue","An exploit for a Windows SMB flaw (MS17-010), leaked in 2017 and used by WannaCry and NotPetya. Patching fixes it."],
+["What is a cryptominer?","cryptominer|crypto mining","Malware that secretly uses your processor or battery to mine cryptocurrency, making the device slow and hot."],
+["What is social engineering?","social engineering","Tricking people instead of breaking software, such as fake calls or messages pretending to be your bank or IT help desk."],
+["What is a sandbox?","sandbox","An isolated space where software runs without touching the rest of the system. Researchers use it to study malware safely."],
+["What is encryption?","encryption","Scrambling data so only someone with the key can read it. Ransomware abuses it, but you can protect your own data with BitLocker, FileVault or iPhone's built-in encryption."],
+["Can an iPhone get a virus?","iphone virus|iphone get a virus|ios virus","Classic viruses are rare on iPhone because iOS isolates apps. Real risks are scams, bad profiles, stolen passwords and targeted spyware like Pegasus."],
+["Do Macs get viruses?","mac virus|macs get viruses|macbook virus","Yes, Macs can get malware, though less often than Windows. Keep macOS updated and install apps only from the App Store or trusted developers."],
+["Do I need antivirus on Windows?","need antivirus|antivirus on windows","Windows includes Microsoft Defender, a good baseline. Keep it on and updated and be careful what you download."],
+["Is Windows Defender enough?","windows defender|defender enough","For most people, yes, with safe habits. For a second opinion, scan with Malwarebytes downloaded from its official site."],
+["Antivirus for Android","antivirus for android|android antivirus|play protect","Android has Google Play Protect built in. Install apps only from the Play Store, update Android, and ignore apps claiming your phone is infected."],
+["How to scan Windows","scan windows|scan my windows|scan my pc|scan my computer","Settings, Privacy & security, Windows Security, Virus & threat protection, Scan options, Full scan. Also run Microsoft Defender Offline scan for hidden malware."],
+["How to scan Android","scan android|scan my android|scan my phone|android scan","Play Store, tap your profile picture, Play Protect, Scan. Then check Settings, Apps for anything you did not install."],
+["How to scan a Mac","scan mac|mac scan|scan my mac|scan my macbook","Macs have built-in XProtect. For extra scanning use Malwarebytes from its official site, and check Applications and Login Items for unknown entries."],
+["How to check an iPhone","check iphone|iphone hacked|iphone malware","Update iOS, check Settings, General, VPN & Device Management for unknown profiles, delete unknown apps, and change your Apple ID password if worried."],
+["XProtect and Gatekeeper","xprotect|gatekeeper","Mac's built-in protections. Gatekeeper checks apps before they open, and XProtect scans for known malware."],
+["How to remove a virus","remove malware|remove virus|clean my pc|remove a virus","Disconnect from the internet, run a full scan, run the offline scan, remove unknown programs, then change passwords from a clean device."],
+["Safe Mode on Windows","safe mode windows|windows safe mode","Hold Shift and click Restart, then Troubleshoot, Advanced options, Startup Settings, Restart, and choose Safe Mode with Networking."],
+["Safe mode on Android","safe mode android|android safe mode","Press and hold Power, then press and hold Power off until the Safe mode prompt appears and tap OK. Steps vary by brand. Downloaded apps are disabled so you can remove the bad one."],
+["How to factory reset","factory reset|reset my phone|reset my pc","Back up files first. Windows: Settings, System, Recovery. Android: Settings, System, Reset options. iPhone: Settings, General, Transfer or Reset iPhone. Restore files, not unknown apps."],
+["How to back up files","backup|back up","Follow 3-2-1: three copies, two kinds of storage, one offline or offsite. An offline copy beats ransomware."],
+["Should I pay the ransom?","pay the ransom|should i pay","No. Payment does not guarantee your files return and funds more attacks. Disconnect, restore from backup and report it."],
+["How to remove ransomware","remove ransomware|decrypt files|decrypt","Disconnect, do not pay, clean the device with a full scan, then restore from backup. Check nomoreransom.org for free decryption tools."],
+["How to spot phishing","spot phishing|fake email|suspicious email|fake sms","Look for urgency, a mismatched sender, odd links and requests for passwords or money. When unsure, open the company's site yourself instead of the link."],
+["What is two-factor login?","two-factor|2fa|mfa|otp","A second proof such as a code, so a stolen password is not enough. Turn it on for email and banking first."],
+["What makes a strong password?","strong password|good password|password manager","Long, unique for every account, ideally 14+ characters, stored in a password manager."],
+["Is public Wi-Fi safe?","public wifi|public wi-fi|free wifi","Avoid banking on it, use HTTPS sites only and turn off auto-connect. A VPN adds privacy but is not antivirus."],
+["Does a VPN remove viruses?","vpn","No. A VPN encrypts your connection and hides traffic from the local network, but it does not scan for or remove malware."],
+["How do viruses spread?","how do viruses spread|how does malware spread|how do i get infected","Email attachments, fake downloads, infected USB drives, unpatched flaws, malicious ads and fake apps."],
+["Can a website infect me?","website infect|visiting a website|drive-by","Rarely, through an out-of-date browser. Keep your browser updated and avoid downloads from untrusted sites."],
+["Are QR codes dangerous?","qr code","They can lead to phishing sites. Check the link preview and never enter passwords after scanning."],
+["Is cracked software safe?","pirated|cracked|crack software|keygen","No. Cracked software is a common way to spread trojans and password stealers."],
+["Is my webcam hacked?","webcam hacked|camera hacked","Check which apps have camera permission, look for the indicator light, update your system and scan. Covering the lens is a cheap extra step."],
+["What to do after being hacked","i got hacked|been hacked|after being hacked","Change passwords from a clean device, turn on two-factor login, sign out of all devices, scan, and warn contacts if messages were sent."],
+["How to update my device","how to update|update windows|update android|update iphone|update mac","Windows: Settings, Windows Update. Android: Settings, System, System update. iPhone: Settings, General, Software Update. Mac: System Settings, General, Software Update."],
+["How to check running programs","activity monitor|running programs|task manager","Windows: Ctrl+Shift+Esc for Task Manager. Mac: Activity Monitor. Sort by CPU and search unknown names online before ending them."],
+["How to manage startup programs","startup items|startup programs","Windows: Task Manager, Startup apps. Mac: System Settings, General, Login Items. Disable anything unknown."],
+["What is sideloading?","sideload|apk","Installing apps from outside the official store, like APK files, skips safety checks and is a common way Android malware spreads."],
+["What is iPhone Lockdown Mode?","lockdown mode","An extreme protection mode for people at risk of targeted attacks like Pegasus. It limits some features."],
+["Are fake antivirus apps real?","fake antivirus|fake antivirus app","Yes. Apps and pop-ups saying your device is infected are scams. Install protection only from official sources."],
+["Which attachments are risky?","attachment|email attachment","Unexpected .exe, .zip, .js and Office files asking you to enable macros. ILOVEYOU spread this way."],
+["How to browse safely","browser safe|chrome safe|browser security","Keep the browser updated, use only needed extensions and keep safe-browsing protection on."],
+["Do ad blockers help?","ad blocker|adblock","A reputable ad blocker reduces malicious ads. Install it only from the official browser store."],
+["How to secure a router","router security|secure router|wifi password","Change the default admin password, use WPA2 or WPA3 and update firmware. Mirai spread through default passwords."],
+["Are smart devices safe?","iot|smart device|smart camera|smart tv","Change default passwords, update firmware and use a separate network if possible. Mirai took over cameras and routers this way."],
+["Biggest virus ever?","biggest virus|most damaging|worst virus","By estimated cost, MyDoom ($38B est.), NotPetya ($10B+) and WannaCry (up to $4B est.) rank among the worst. See the Library."],
+["First computer virus?","first virus|first computer virus|first worm|oldest virus","Creeper (1971) is often called the first worm, and Brain (1986) the first PC virus. See both in the Library."]];
+const SC={Windows:"scan windows",Android:"scan android",iPhone:"check iphone",Mac:"scan mac"},IN={Windows:"windows defender",Android:"antivirus for android",iPhone:"iphone virus",Mac:"xprotect"};
+//ENDDATA
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),norm=s=>s.toLowerCase().replace(/anti[-\s]virus/g,"antivirus").replace(/[’]/g,"'");
+const sc=(kw,low)=>kw.split("|").filter(k=>low.includes(k)).reduce((n,k)=>n+k.length,0);
+function findV(low){return V.filter(v=>{if(["brain","flame"].includes(v.id)&&!/virus|malware|worm|spyware|hack|cyber|computer|attack/.test(low))return false;const a=[v.name.toLowerCase()].concat(v.id=="storm"?[]:[v.id],{cih:["chernobyl"],kaseya:["revil"],sunburst:["solarwinds"]}[v.id]||[]);return a.some(x=>new RegExp("\\b"+esc(x)+"\\b").test(low))}).slice(0,2)}
+let os="Windows";
+const card=(t,b)=>`<div class="fact"><b>${t}</b><br>${b}</div>`,sCard=e=>card(e[2]+" (likely)",e[3]+`<ul class="pn">${e[4].split(";").map(x=>`<li>${x}</li>`).join("")}</ul>`);
+function show(h){$("out").innerHTML=h;$("out").scrollIntoView()}
+function tail(){return `<div class="btns"><button onclick="ask(SC[os])">Check my ${os}</button><button onclick="ask(IN[os])">Antivirus for ${os}</button></div><p class="hint">Symptoms do not prove an infection. Only a real scan can confirm it.</p>`}
+function ask(raw){const low=norm(raw).trim();if(!low)return;$("tx").value=raw;
+const vs=findV(low),qs=Q.map(e=>[sc(e[1],low),e]).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]).slice(0,2),ss=S.map(e=>[sc(e[1],low),e]).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]).slice(0,3);
+let h=vs.map(v=>card(`${v.name} (${v.year}, ${v.type})`,`${v.history} <a href="virus.html?v=${v.id}">Open full page</a>`)).join("")+qs.map(x=>card(x[1][0],x[1][2])).join("")+ss.map(x=>sCard(x[1])).join("");
+if(ss.length)h+=tail();if(!h)h=card("I do not have that yet","Try a virus name like WannaCry, a topic like ransomware or phishing, or tap a symptom below.");show(h)}
+$("sub").textContent=`Describe a problem or ask a question. Nova knows ${S.length} symptoms, ${Q.length} questions and ${V.length} famous viruses. It gives likely causes, how to check, antivirus advice and prevention. It is a guide, not a diagnosis.`;
+Object.keys(SC).forEach(o=>{const b=document.createElement("button");b.textContent=o;b.className=o==os?"on":"";b.onclick=()=>{os=o;[...$("os").children].forEach(k=>k.classList.toggle("on",k==b))};$("os").append(b)});
+S.forEach(e=>{const b=document.createElement("button");b.textContent=e[0];b.onclick=()=>{$("tx").value=e[0];show(sCard(e)+tail())};$("ch").append(b)});
+$("go").onclick=()=>ask($("tx").value);$("tx").onkeydown=e=>{if(e.key=="Enter")ask($("tx").value)};
+</script></body></html>
